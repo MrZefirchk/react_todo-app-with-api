@@ -1,17 +1,9 @@
 import classNames from 'classnames';
-import React from 'react';
+import { useError } from '../ErrorContext/ErrorContext';
 
-type Props = {
-  isErrorVisible: boolean;
-  onClose: (hideError: boolean) => void;
-  errorMessage: string;
-};
+export const ErrorNotification = () => {
+  const { error, clearError } = useError();
 
-export const ErrorNotification: React.FC<Props> = ({
-  isErrorVisible,
-  onClose,
-  errorMessage,
-}) => {
   return (
     <div
       data-cy="ErrorNotification"
@@ -21,7 +13,7 @@ export const ErrorNotification: React.FC<Props> = ({
         'is-light',
         'has-text-weight-normal',
         {
-          hidden: !isErrorVisible,
+          hidden: !error,
         },
       )}
     >
@@ -29,10 +21,10 @@ export const ErrorNotification: React.FC<Props> = ({
         data-cy="HideErrorButton"
         type="button"
         className="delete"
-        onClick={() => onClose(false)}
+        onClick={clearError}
       />
       {/* show only one message at a time */}
-      {errorMessage}
+      {error}
       {/*
       Unable to load todos
       {/* <br />

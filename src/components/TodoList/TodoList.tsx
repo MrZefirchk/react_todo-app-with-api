@@ -4,12 +4,13 @@ import { TodoItem } from '../TodoItem';
 
 type Props = {
   todos: Todo[];
-  deleteTodo: (todoId: number) => Promise<void>;
-  updateTodo: (updateTodo: Todo) => Promise<void>;
+  deleteTodo: (todoId: number) => Promise<boolean>;
+  updateTodo: (updateTodo: Todo) => Promise<boolean>;
   tempTodo?: Todo | null;
   isAdding?: boolean;
-  deletingTodos?: Record<number, boolean>;
-  updatingTodos?: Record<number, boolean>;
+  deletingTodos?: Set<number>;
+  updatingTodos?: Set<number>;
+  // setError: (ErrorMessage: ErrorMessage) => void;
 };
 
 export const TodoList: React.FC<Props> = React.memo(
@@ -19,8 +20,8 @@ export const TodoList: React.FC<Props> = React.memo(
     updateTodo,
     tempTodo = null,
     isAdding = false,
-    deletingTodos = {},
-    updatingTodos = {},
+    deletingTodos = new Set(),
+    updatingTodos = new Set(),
   }) => {
     return (
       <section className="todoapp__main" data-cy="TodoList">
@@ -30,7 +31,7 @@ export const TodoList: React.FC<Props> = React.memo(
             todo={todo}
             onDelete={deleteTodo}
             onUpdate={updateTodo}
-            isLoading={deletingTodos[todo.id] || updatingTodos[todo.id]}
+            isLoading={deletingTodos.has(todo.id) || updatingTodos.has(todo.id)}
           />
         ))}
         {tempTodo && <TodoItem todo={tempTodo} isLoading={isAdding} />}

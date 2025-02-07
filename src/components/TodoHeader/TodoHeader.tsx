@@ -1,66 +1,48 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Todo } from '../../types/Todo';
-import { handleError } from '../../utils/utils';
 import classNames from 'classnames';
-import { ErrorMessage } from '../../types/ErrorMessage';
+import { useError } from '../ErrorContext';
 
 type Props = {
   todos: Todo[];
-  searchQuery: string;
-  setSearchQuery: (searchQuery: string) => void;
-  setError: (error: string) => void;
-  setIsErrorVisible: (isVisible: boolean) => void;
-  addTodo: (todo: Omit<Todo, 'id' | 'userId'>) => Promise<void>;
-  updateTodo: (updateTodo: Todo) => Promise<void>;
+  addTodo: (todo: Omit<Todo, 'id' | 'userId'>) => Promise<boolean>;
   handleToggleAll: () => Promise<void>;
   headerInputRef: React.RefObject<HTMLInputElement>;
   isAdding?: boolean;
 };
 
 export const TodoHeader: React.FC<Props> = React.memo(
-  ({
-    todos,
-    searchQuery,
-    setSearchQuery,
-    setError,
-    setIsErrorVisible,
-    addTodo,
-    handleToggleAll,
-    headerInputRef,
-    isAdding = false,
-  }) => {
+  ({ todos, addTodo, handleToggleAll, headerInputRef, isAdding = false }) => {
+    const { setError } = useError();
+    const [newTodoTitle, setNewTodoTitle] = useState('');
+
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
       event.preventDefault();
 
-      const trimmedQuery = searchQuery.trim();
+      const trimmednewTodoTitle = newTodoTitle.trim();
 
-      if (trimmedQuery === '') {
-        handleError('Title should not be empty', setError, setIsErrorVisible);
+      if (trimmednewTodoTitle === '') {
+        setError('Title should not be empty');
 
         return;
       }
 
-      try {
-        await addTodo({
-          title: trimmedQuery,
-          completed: false,
-        });
-        setSearchQuery('');
-      } catch (error) {
-        handleError(
-          (error as Error).message as ErrorMessage,
-          setError,
-          setIsErrorVisible,
-        );
+      const isAdded = await addTodo({
+        title: trimmednewTodoTitle,
+        completed: false,
+      });
+
+      if (isAdded) {
+        setNewTodoTitle('');
       }
     };
 
-    const handleSearchQueryChange = (
+    const handlenewTodoTitleChange = (
       event: React.ChangeEvent<HTMLInputElement>,
     ) => {
       const enteredValue = event.target.value;
 
-      setSearchQuery(enteredValue);
+      setNewTodoTitle(enteredValue);
     };
 
     return (
@@ -84,8 +66,8 @@ export const TodoHeader: React.FC<Props> = React.memo(
             ref={headerInputRef}
             className="todoapp__new-todo"
             placeholder="What needs to be done?"
-            value={searchQuery}
-            onChange={handleSearchQueryChange}
+            value={newTodoTitle}
+            onChange={handlenewTodoTitleChange}
             disabled={isAdding}
           />
         </form>

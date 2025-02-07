@@ -4,8 +4,8 @@ import classNames from 'classnames';
 
 type Props = {
   todo: Todo;
-  onDelete?: (todoId: number) => Promise<void>;
-  onUpdate?: (updatedTodo: Todo) => Promise<void>;
+  onDelete?: (todoId: number) => Promise<boolean>;
+  onUpdate?: (updatedTodo: Todo) => Promise<boolean>;
   isLoading?: boolean;
 };
 
@@ -17,6 +17,7 @@ export const TodoItem: React.FC<Props> = React.memo(
     isLoading = false,
   }) => {
     const [isEditing, setIsEditing] = useState(false);
+    const [editTrigger, setEditTrigger] = useState(false);
     const [updatedTitle, setUpdatedTitle] = useState(todo.title);
     const todoItemInputRef = useRef<HTMLInputElement>(null);
 
@@ -24,10 +25,14 @@ export const TodoItem: React.FC<Props> = React.memo(
       if (isEditing) {
         todoItemInputRef.current?.focus();
       }
-    }, [isEditing]);
+    }, [isEditing, editTrigger]);
 
-    const handleDeleteTodo = async () => {
-      await onDelete(todo.id);
+    const handleDeleteTodo = () => {
+      onDelete(todo.id);
+    };
+
+    const handleToggleCompleted = () => {
+      onUpdate({ ...todo, completed: !todo.completed });
     };
 
     const handleUpdateTodo = async (event?: React.FormEvent) => {
@@ -37,19 +42,27 @@ export const TodoItem: React.FC<Props> = React.memo(
 
       if (trimmedUpdatedTitle === '') {
         handleDeleteTodo();
-      } else if (trimmedUpdatedTitle !== todo.title) {
-        await onUpdate({
+
+        return;
+      }
+
+      if (trimmedUpdatedTitle !== todo.title) {
+        const isSuccessUpdated = await onUpdate({
           ...todo,
           title: trimmedUpdatedTitle,
         });
+
+        if (!isSuccessUpdated) {
+          setEditTrigger(prev => !prev);
+
+          return;
+        }
       }
 
       setIsEditing(false);
     };
 
     const handleKeyUpEvent = (event: React.KeyboardEvent<HTMLInputElement>) => {
-      event.preventDefault();
-
       if (event.key === 'Escape') {
         setUpdatedTitle(todo.title);
         setIsEditing(false);
@@ -72,7 +85,7 @@ export const TodoItem: React.FC<Props> = React.memo(
             className="todo__status"
             id={`todo__status-${todo.id}`}
             checked={todo.completed}
-            onChange={() => onUpdate({ ...todo, completed: !todo.completed })}
+            onChange={handleToggleCompleted}
           />
         </label>
 
@@ -106,6 +119,7 @@ export const TodoItem: React.FC<Props> = React.memo(
               className="todo__remove"
               data-cy="TodoDelete"
               onClick={handleDeleteTodo}
+              disabled={isLoading}
             >
               ×
             </button>
